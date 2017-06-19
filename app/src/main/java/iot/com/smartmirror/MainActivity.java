@@ -1,8 +1,8 @@
 package iot.com.smartmirror;
 
+import android.app.Activity;
 import android.media.Image;
 import android.media.ImageReader;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.content.pm.PackageManager;
@@ -20,13 +20,11 @@ import java.io.IOException;
 
 import iot.com.smartmirror.camera.SmartMirrorCamera;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private Handler cameraHandler;
-    private HandlerThread cameraHandlerThread;
-    private Button button;
-    private final String BUTTON_GPIO_PIN = "BCM21";
+    // FIXME to collect the GPIO PIN definition.
+    private final static String BUTTON_GPIO_PIN = "BCM21";
     private SmartMirrorCamera camera = SmartMirrorCamera.getInstance();
     private Bitmap photo;
     private ImageView showPictView;
@@ -44,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         if (checkSelfPermission(Manifest.permission.CAMERA)
@@ -54,10 +52,9 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        //TODO take photo
-        cameraHandlerThread = new HandlerThread("CameraBackground");
+        HandlerThread cameraHandlerThread = new HandlerThread("CameraBackground");
         cameraHandlerThread.start();
-        cameraHandler = new Handler(cameraHandlerThread.getLooper());
+        Handler cameraHandler = new Handler(cameraHandlerThread.getLooper());
         camera.initCamera(this, cameraHandler, new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
@@ -71,10 +68,9 @@ public class MainActivity extends AppCompatActivity {
                 showPictView.setImageBitmap(photo);
                 setContentView(showPictView);
             }
-
         });
         try {
-            button = new Button(BUTTON_GPIO_PIN, Button.LogicState.PRESSED_WHEN_LOW);
+            Button button = new Button(BUTTON_GPIO_PIN, Button.LogicState.PRESSED_WHEN_LOW);
             button.setOnButtonEventListener(mButtonCallback);
             showPictView = new ImageView(this);
         } catch (IOException e) {
