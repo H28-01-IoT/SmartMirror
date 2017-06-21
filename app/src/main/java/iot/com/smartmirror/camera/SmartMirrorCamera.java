@@ -60,7 +60,6 @@ public class SmartMirrorCamera {
                     if (cameraDevice == null) {
                         return;
                     }
-
                     // When the session is ready, we start capture.
                     captureSession = cameraCaptureSession;
                     triggerImageCapture();
