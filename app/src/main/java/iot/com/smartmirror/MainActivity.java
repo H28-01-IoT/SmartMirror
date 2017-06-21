@@ -16,6 +16,8 @@ import android.view.KeyEvent;
 
 import com.google.android.things.contrib.driver.button.Button;
 
+import org.opencv.android.OpenCVLoader;
+
 import java.nio.ByteBuffer;
 import java.io.IOException;
 
@@ -37,7 +39,6 @@ public class MainActivity extends Activity implements ImageReader.OnImageAvailab
             camera.takePicture();
         }
     };
-
     @Override
     /**
      * @Author Ryo Watanabe
@@ -45,7 +46,11 @@ public class MainActivity extends Activity implements ImageReader.OnImageAvailab
      */
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        if(OpenCVLoader.initDebug()) {
+                Log.d(TAG, "OpenCV run succeeded!");
+        } else {
+            Log.d(TAG, "OpenCV run failure");
+        }
         if (checkSelfPermission(Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             // A problem occurred auto-granting the permission
@@ -69,11 +74,11 @@ public class MainActivity extends Activity implements ImageReader.OnImageAvailab
                 setContentView(showPictView);
         });
         try {
-            Button button = new Button(BUTTON_GPIO_PIN, Button.LogicState.PRESSED_WHEN_LOW);
+        Button button = new Button(BUTTON_GPIO_PIN, Button.LogicState.PRESSED_WHEN_LOW);
             button.setOnButtonEventListener(mButtonCallback);
             showPictView = new ImageView(this);
         } catch (IOException e) {
-            Log.e(TAG, "button driver error", e);
+        Log.e(TAG, "button driver error", e);
         }
     }
 
@@ -110,5 +115,4 @@ public class MainActivity extends Activity implements ImageReader.OnImageAvailab
         }
         return super.dispatchKeyEvent(e);
     }
-
 }
