@@ -33,13 +33,15 @@ public class SmartMirrorCamera {
     private final CameraCaptureSession.CaptureCallback captureCallback =
             new CameraCaptureSession.CaptureCallback() {
 
+                // This method is called when progressing capture.
                 @Override
                 public void onCaptureProgressed(CameraCaptureSession session,
                                                 CaptureRequest request,
                                                 CaptureResult partialResult) {
-                    Log.d(TAG, "Partial result");
+                    Log.d(TAG, "Partial result of capture progress");
                 }
 
+                // This method is called when completed capturing.
                 @Override
                 public void onCaptureCompleted(CameraCaptureSession session,
                                                CaptureRequest request,
@@ -54,10 +56,13 @@ public class SmartMirrorCamera {
 
     private CameraCaptureSession.StateCallback mSessionCallback =
             new CameraCaptureSession.StateCallback() {
+                /* This method is called when the camera device has finished configuring itself,
+                   and the session can start processing capture requests.*/
                 @Override
                 public void onConfigured(CameraCaptureSession cameraCaptureSession) {
                     // The camera is already closed
                     if (cameraDevice == null) {
+                        Log.w(TAG, "camera device is null");
                         return;
                     }
                     // When the session is ready, we start capture.
@@ -65,22 +70,30 @@ public class SmartMirrorCamera {
                     triggerImageCapture();
                 }
 
+                // this method is called when the camera device configuration fails.
                 @Override
                 public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
                     Log.w(TAG, "Failed to configure camera");
                 }
             };
 
-
     private SmartMirrorCamera() {}
     private static SmartMirrorCamera self;
     public static SmartMirrorCamera getInstance() {
         if(self == null) {
             self = new SmartMirrorCamera();
+            Log.d(TAG, "The first camera instantiate");
         }
+        Log.d(TAG, "camera instantiate");
         return self;
     }
 
+    /**
+     *
+     * @param c context which get camera service from system service.
+     * @param h Listener handler what passes for image available listener.
+     * @param l It is Listener when runs image available.
+     */
     public void initCamera(Context c, Handler h, ImageReader.OnImageAvailableListener l) {
         CameraManager manager = (CameraManager) c.getSystemService(CAMERA_SERVICE);
         String[] camIds = {};
@@ -98,16 +111,22 @@ public class SmartMirrorCamera {
         imageReader = ImageReader.newInstance(IMAGE_WIDTH, IMAGE_HEIGHT,
                 ImageFormat.JPEG, MAX_IMAGES);
         imageReader.setOnImageAvailableListener(l, h);
-
     }
 
+    /**
+     * @Author Ryo Watanabe
+     * take picture.
+     * this method processes only create session.
+     */
     public void takePicture() {
         if (cameraDevice == null) {
             Log.w(TAG, "Cannot capture image. Camera not initialized.");
             return;
         }
 
-        // Here, we create a CameraCaptureSession for capturing still images.
+        /* Here, we create a CameraCaptureSession for capturing still images.
+           The session is the execution unit of request for camera.
+           */
         try {
             cameraDevice.createCaptureSession(
                     Collections.singletonList(imageReader.getSurface()),
@@ -117,6 +136,11 @@ public class SmartMirrorCamera {
             Log.d(TAG, "access exception while preparing pic", cae);
         }
     }
+
+    /**
+     * @Author Ryo Watanabe
+     * This method summarize the process regarding camera.
+     */
     private void triggerImageCapture() {
         try {
             final CaptureRequest.Builder captureBuilder =
@@ -126,7 +150,7 @@ public class SmartMirrorCamera {
             Log.d(TAG, "Session initialized.");
             captureSession.capture(captureBuilder.build(), captureCallback, null);
         } catch (CameraAccessException cae) {
-            Log.d(TAG, "camera capture exception");
+            Log.e(TAG, "camera access exception : " + cae.getMessage());
         }
     }
 }
