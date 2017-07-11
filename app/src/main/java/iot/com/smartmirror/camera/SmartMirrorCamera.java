@@ -29,6 +29,31 @@ public class SmartMirrorCamera {
     private static final int MAX_IMAGES = 1;
     private ImageReader imageReader;
     private CameraDevice cameraDevice;
+    private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
+        @Override
+        public void onOpened(CameraDevice camera) {
+            Log.d(TAG, "Opened camera.");
+            cameraDevice = camera;
+        }
+
+        @Override
+        public void onDisconnected(CameraDevice camera) {
+            Log.d(TAG, "Camera disconnected, closing.");
+            camera.close();
+        }
+
+        @Override
+        public void onError(CameraDevice camera, int i) {
+            Log.d(TAG, "Camera device error, closing.");
+            camera.close();
+        }
+
+        @Override
+        public void onClosed(CameraDevice camera) {
+            Log.d(TAG, "Closed camera, releasing");
+            cameraDevice = null;
+        }
+    };
     private CameraCaptureSession captureSession;
     private final CameraCaptureSession.CaptureCallback captureCallback =
             new CameraCaptureSession.CaptureCallback() {
@@ -77,10 +102,13 @@ public class SmartMirrorCamera {
                 }
             };
 
-    private SmartMirrorCamera() {}
+    private SmartMirrorCamera() {
+    }
+
     private static SmartMirrorCamera self;
+
     public static SmartMirrorCamera getInstance() {
-        if(self == null) {
+        if (self == null) {
             self = new SmartMirrorCamera();
             Log.d(TAG, "The first camera instantiate");
         }
@@ -111,6 +139,11 @@ public class SmartMirrorCamera {
         imageReader = ImageReader.newInstance(IMAGE_WIDTH, IMAGE_HEIGHT,
                 ImageFormat.JPEG, MAX_IMAGES);
         imageReader.setOnImageAvailableListener(l, h);
+        try {
+            manager.openCamera(id, stateCallback, h);
+        } catch (CameraAccessException e) {
+            Log.e(TAG,"Exception in camera access", e);
+        }
     }
 
     /**
@@ -133,7 +166,7 @@ public class SmartMirrorCamera {
                     mSessionCallback,
                     null);
         } catch (CameraAccessException cae) {
-            Log.d(TAG, "access exception while preparing pic", cae);
+            Log.e(TAG, "access exception while preparing pic" , cae);
         }
     }
 
@@ -150,7 +183,7 @@ public class SmartMirrorCamera {
             Log.d(TAG, "Session initialized.");
             captureSession.capture(captureBuilder.build(), captureCallback, null);
         } catch (CameraAccessException cae) {
-            Log.e(TAG, "camera access exception : " + cae.getMessage());
+            Log.e(TAG, "camera access exception : " , cae);
         }
     }
 }
