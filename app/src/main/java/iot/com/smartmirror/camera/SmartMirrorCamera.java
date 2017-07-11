@@ -10,7 +10,9 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.media.ImageReader;
+import android.os.Build;
 import android.os.Handler;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CaptureRequest;
@@ -21,6 +23,7 @@ import java.util.Collections;
 
 import static android.content.Context.CAMERA_SERVICE;
 
+@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class SmartMirrorCamera {
     private static final String TAG = SmartMirrorCamera.class.getSimpleName();
 
