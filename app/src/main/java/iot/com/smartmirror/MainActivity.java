@@ -7,6 +7,7 @@ import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.TextureView;
+import android.widget.ImageView;
 
 import com.google.android.things.contrib.driver.button.Button;
 
@@ -83,7 +84,14 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         d(TAG, "this key is pressed -> " + pressed);
         if (KeyEvent.KEYCODE_ENTER == pressed) {
             camera.take();
-            d(TAG, "camera has started up by enter key press event.");
+            d(TAG, "camera has started up by enter ss event.");
+            if(camera.photoExists()) {
+                d(TAG, "MainActivity receives photo from camera.");
+                ImageView photoView = new ImageView(this);
+                photoView.setImageBitmap(camera.getPhoto());
+                setContentView(photoView);
+                d(TAG, "photo display completed");
+            }
         }
         if (KeyEvent.KEYCODE_ESCAPE == pressed) {
             camera.shutdown();
@@ -113,8 +121,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
-        d(TAG,"preview updated");
+        d(TAG, "preview updated");
     }
+
     public TextureView getPreview() {
         return preview;
     }
