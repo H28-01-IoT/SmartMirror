@@ -12,9 +12,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <!-- TO_THINGS this block necessary when SmartMirror work on android things.
         <uses-library android:name="com.google.android.things"/>
-        <activity android:name=".MainActivity">
-            <!-- Launch activity as default from Android Studio -->
+        -->
+<activity android:name=".MainActivity">
+    <!-- Launch activity as default from Android Studio -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -23,7 +26,9 @@
             <!-- Launch activity automatically on boot -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
+                <!-- TO_THINGS this block necessary when SmartMirror work on android things.
                 <category android:name="android.intent.category.IOT_LAUNCHER"/>
+                -->
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>

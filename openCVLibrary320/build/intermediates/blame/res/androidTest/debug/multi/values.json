@@ -1,10 +1,14 @@
 [
     {
-        "outputFile": "/Users/Ryo/AndroidStudioProjects/SmartMirror/openCVLibrary320/build/intermediates/incremental/mergeDebugAndroidTestResources/merged.dir/values/values.xml",
+        "outputFile": "C:\\Users\\Ryo\\AndroidStudioProjects\\SmartMirror\\openCVLibrary320\\build\\intermediates\\incremental\\mergeDebugAndroidTestResources\\merged.dir\\values\\values.xml",
         "map": []
     },
     {
-        "outputFile": "/Users/Ryo/AndroidStudioProjects/SmartMirror/C:\\Users\\IBM_ADMIN\\AndroidStudioProjects\\SmartMirror\\openCVLibrary320\\build\\intermediates\\incremental\\mergeDebugAndroidTestResources\\merged.dir\\values\\values.xml",
+        "outputFile": "C:\\Users\\IBM_ADMIN\\AndroidStudioProjects\\SmartMirror\\openCVLibrary320\\build\\intermediates\\incremental\\mergeDebugAndroidTestResources\\merged.dir\\values\\values.xml",
+        "map": []
+    },
+    {
+        "outputFile": "C:\\Users\\Ryo\\AndroidStudioProjects\\SmartMirror\\C:\\Users\\IBM_ADMIN\\AndroidStudioProjects\\SmartMirror\\openCVLibrary320\\build\\intermediates\\incremental\\mergeDebugAndroidTestResources\\merged.dir\\values\\values.xml",
         "map": []
     }
 ]
