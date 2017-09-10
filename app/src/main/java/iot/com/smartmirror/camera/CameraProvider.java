@@ -6,21 +6,27 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.app.ActivityCompat;
 import android.view.Surface;
-import android.view.TextureView;
 
 import java.nio.ByteBuffer;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
+
+import iot.com.smartmirror.view.fragment.TextureViewFragment;
 
 import static android.content.ContentValues.TAG;
 import static android.content.Context.CAMERA_SERVICE;
@@ -40,14 +46,40 @@ public class CameraProvider {
     private Bitmap photo;
     private CameraDevice cameraDevice;
     private CameraCaptureSession takePhotoSession;
+    private CaptureRequest.Builder previewBuilder;
+    private CaptureRequest previewRequest;
     private ImageReader imageReader = ImageReader.newInstance(IMAGE_WIDTH, IMAGE_HEIGHT,
             ImageFormat.JPEG, MAX_IMAGES);
+    private boolean isCameraAvailable = false;
 
     private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(CameraDevice camera) {
             d(TAG, "Opened camera.");
             cameraDevice = camera;
+            isCameraAvailable = true;
+            try {
+                previewBuilder
+                        = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                // set the preview surface of texture has calling class.
+                // preview setting start.
+                SurfaceTexture texture = TextureViewFragment.getPreview().getSurfaceTexture();
+                List<Surface> surfaceList = new ArrayList<>();
+                if(TextureViewFragment.getPreview().isAvailable()) {
+                    Surface surface = new Surface(texture);
+                    surfaceList.add(surface);
+                    previewBuilder.addTarget(surface);
+                } else {
+                    previewBuilder.addTarget(imageReader.getSurface());
+                }
+                surfaceList.add(imageReader.getSurface());
+                cameraDevice.createCaptureSession(surfaceList,
+                        takePhotoStateCallBack,
+                        null);
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            }
+
         }
 
         @Override
@@ -89,10 +121,13 @@ public class CameraProvider {
                     // set content view
                 }
             };
+
     private CameraCaptureSession.StateCallback takePhotoStateCallBack =
             new CameraCaptureSession.StateCallback() {
-                /* This method is called when the camera device has finished configuring itself,
+
+/* This method is called when the camera device has finished configuring itself,
                    and the session can start processing capture requests.*/
+
                 @Override
                 public void onConfigured(CameraCaptureSession cameraCaptureSession) {
                     d(TAG, "smart mirror camera configuring start.");
@@ -104,12 +139,10 @@ public class CameraProvider {
                     // When the session is ready, we start capture.
                     takePhotoSession = cameraCaptureSession;
                     try {
-                        final CaptureRequest.Builder takePhotoRequestBuilder =
-                                cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-                        takePhotoRequestBuilder.addTarget(imageReader.getSurface());
-                        takePhotoRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                        previewBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                        previewRequest = previewBuilder.build();
+                        takePhotoSession.setRepeatingRequest(previewRequest, takePhotoCallback, null);
                         d(TAG, "Session initialized.");
-                        takePhotoSession.capture(takePhotoRequestBuilder.build(), takePhotoCallback, null);
                     } catch (CameraAccessException cae) {
                         e(TAG, "camera access exception : ", cae);
                     }
@@ -123,13 +156,13 @@ public class CameraProvider {
                 }
             };
 
+
     /**
-     * @param c context which get camera service from system service.
      * @Author Ryo Watanabe
      * initialize camera.
      * create preview session and preview start.
      */
-    public void initialize(Context c, TextureView v) {
+    public void initialize(Context c) {
         d(TAG, "camera initialize start");
         CameraManager manager = (CameraManager) c.getSystemService(CAMERA_SERVICE);
         String[] camIds = {};
@@ -161,17 +194,8 @@ public class CameraProvider {
             }
             // if open camera method receives null handler,
             // callback calls calling thread.
-            manager.openCamera(id, stateCallback, null);
-
+            manager.openCamera(id, stateCallback, new Handler(Looper.getMainLooper()));
             // create request builder for preview.
-            d(TAG, "preview setting start.");
-            CaptureRequest.Builder previewBuilder
-                    = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            // set the preview surface of texture has calling class.
-            previewBuilder.addTarget(new Surface(v.getSurfaceTexture()));
-            previewBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-            takePhotoSession.setRepeatingRequest(previewBuilder.build(), null, null);
-            d(TAG, "preview start now");
         } catch (CameraAccessException e) {
             e(TAG, "Exception in camera access", e);
         }
@@ -182,19 +206,20 @@ public class CameraProvider {
      * @Author Ryo Watanabe
      * take photo.
      */
-    public void take() {
+    public void take(Context c) {
         d(TAG, "take photo start");
         if (cameraDevice == null) {
             w(TAG, "Cannot capture image. Camera not initialized.");
             return;
         }
         try {
-            // Here, we create a CameraCaptureSession for capturing still images.
-            // The session is the execution unit of request for camera.
             takePhotoSession.stopRepeating();
-            cameraDevice.createCaptureSession(
-                    Collections.singletonList(imageReader.getSurface()),
-                    takePhotoStateCallBack,
+            CaptureRequest.Builder captureBuilder =
+                    cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            previewBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
+                    CameraMetadata.CONTROL_AF_TRIGGER_START);
+            takePhotoSession.capture(previewBuilder.build(), takePhotoCallback,
                     null);
         } catch (CameraAccessException cae) {
             e(TAG, "access exception while preparing pic", cae);
