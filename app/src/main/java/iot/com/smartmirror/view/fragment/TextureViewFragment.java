@@ -174,6 +174,7 @@ public class TextureViewFragment extends Fragment {
             e(TAG, "button driver error", e);
         }
 */
+        camera.initialize(getContext());
         super.onViewCreated(view,savedInstanceState);
     }
 
