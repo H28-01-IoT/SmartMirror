@@ -26,7 +26,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import iot.com.smartmirror.view.fragment.TextureViewFragment;
+
+import iot.com.smartmirror.fragment.view.PreviewFragment;
 
 import static android.content.ContentValues.TAG;
 import static android.content.Context.CAMERA_SERVICE;
@@ -63,9 +64,9 @@ public class CameraProvider {
                         = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
                 // set the preview surface of texture has calling class.
                 // preview setting start.
-                SurfaceTexture texture = TextureViewFragment.getPreview().getSurfaceTexture();
+                SurfaceTexture texture = PreviewFragment.getPreview().getSurfaceTexture();
                 List<Surface> surfaceList = new ArrayList<>();
-                if(TextureViewFragment.getPreview().isAvailable()) {
+                if(PreviewFragment.getPreview().isAvailable()) {
                     Surface surface = new Surface(texture);
                     surfaceList.add(surface);
                     previewBuilder.addTarget(surface);

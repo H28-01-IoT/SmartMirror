@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.KeyEvent;
 
-import iot.com.smartmirror.view.fragment.TextureViewFragment;
+import iot.com.smartmirror.fragment.view.PreviewFragment;
 
 import static android.util.Log.d;
 
@@ -15,7 +15,7 @@ import static android.util.Log.d;
 public class MainActivity extends Activity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private TextureViewFragment cameraFlagment;
+    private PreviewFragment cameraFlagment;
     // FIXME to collect the GPIO PIN definition.
     private final static String BUTTON_GPIO_PIN = "BCM21";
 
@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        cameraFlagment = TextureViewFragment.newInstance();
+        cameraFlagment = PreviewFragment.newInstance();
         getFragmentManager().beginTransaction()
                 .replace(R.id.mainLayout, cameraFlagment)
                 .commit();

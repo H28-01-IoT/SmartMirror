@@ -1,4 +1,4 @@
-package iot.com.smartmirror.view.fragment;
+package iot.com.smartmirror.fragment.view;
 
 import android.Manifest;
 import android.app.Fragment;
@@ -18,18 +18,19 @@ import org.opencv.android.OpenCVLoader;
 
 import iot.com.smartmirror.R;
 import iot.com.smartmirror.camera.CameraProvider;
+import iot.com.smartmirror.fragment.network.NetworkFragment;
 
 import static android.util.Log.d;
 
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link TextureViewFragment.OnFragmentInteractionListener} interface
+ * {@link PreviewFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
- * Use the {@link TextureViewFragment#newInstance} factory method to
+ * Use the {@link PreviewFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class TextureViewFragment extends Fragment {
+public class PreviewFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -37,11 +38,11 @@ public class TextureViewFragment extends Fragment {
     private CameraProvider camera;
     private static TextureView preview;
 
-    private static final String TAG = TextureViewFragment.class.getSimpleName();
+    private static final String TAG = PreviewFragment.class.getSimpleName();
 
     private OnFragmentInteractionListener mListener;
 
-    public TextureViewFragment() {
+    public PreviewFragment() {
         // Required empty public constructor
     }
 
@@ -49,11 +50,11 @@ public class TextureViewFragment extends Fragment {
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @return A new instance of fragment TextureViewFragment.
+     * @return A new instance of fragment PreviewFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static TextureViewFragment newInstance() {
-        TextureViewFragment fragment = new TextureViewFragment();
+    public static PreviewFragment newInstance() {
+        PreviewFragment fragment = new PreviewFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -159,6 +160,10 @@ public class TextureViewFragment extends Fragment {
         }
         camera = new CameraProvider();
         d(TAG, String.valueOf(preview.isAttachedToWindow()));
+        /**
+         * FIXME: 2017/09/11  why calling preview#isAvailable?
+         * SurfaceTextureListener#onSurfaceTextureAvailable calling initialize.
+         */
         if (preview.isAvailable()) {
             camera.initialize(getActivity());
             d(TAG, "preview is available");
@@ -190,6 +195,12 @@ public class TextureViewFragment extends Fragment {
             ImageView photoView = new ImageView(getActivity());
             photoView.setImageBitmap(camera.getPhoto());
             getActivity().setContentView(photoView);
+/*
+            NetworkFragment networkFragment = NetworkFragment.newInstance();
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.networkFragment, networkFragment)
+                    .commit();
+*/
             d(TAG, "photo display completed");
         }
     }
