@@ -53,111 +53,6 @@ public class CameraProvider {
             ImageFormat.JPEG, MAX_IMAGES);
     private boolean isCameraAvailable = false;
 
-    private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
-        @Override
-        public void onOpened(CameraDevice camera) {
-            d(TAG, "Opened camera.");
-            cameraDevice = camera;
-            isCameraAvailable = true;
-            try {
-                previewBuilder
-                        = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-                // set the preview surface of texture has calling class.
-                // preview setting start.
-                SurfaceTexture texture = PreviewFragment.getPreview().getSurfaceTexture();
-                List<Surface> surfaceList = new ArrayList<>();
-                if(PreviewFragment.getPreview().isAvailable()) {
-                    Surface surface = new Surface(texture);
-                    surfaceList.add(surface);
-                    previewBuilder.addTarget(surface);
-                } else {
-                    previewBuilder.addTarget(imageReader.getSurface());
-                }
-                surfaceList.add(imageReader.getSurface());
-                cameraDevice.createCaptureSession(surfaceList,
-                        takePhotoStateCallBack,
-                        null);
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-        @Override
-        public void onDisconnected(CameraDevice camera) {
-            d(TAG, "Camera disconnected, closing.");
-            camera.close();
-        }
-
-        @Override
-        public void onError(CameraDevice camera, int i) {
-            d(TAG, "Camera device error, closing.");
-            camera.close();
-        }
-
-        @Override
-        public void onClosed(CameraDevice camera) {
-            d(TAG, "Closed camera, releasing");
-            cameraDevice = null;
-        }
-    };
-
-    private final CameraCaptureSession.CaptureCallback takePhotoCallback =
-            new CameraCaptureSession.CaptureCallback() {
-
-                // This method is called when progressing capture.
-                @Override
-                public void onCaptureProgressed(CameraCaptureSession session,
-                                                CaptureRequest request,
-                                                CaptureResult partialResult) {
-                    d(TAG, "Partial result of capture progress");
-                }
-
-                // This method is called when completed capturing.
-                @Override
-                public void onCaptureCompleted(CameraCaptureSession session,
-                                               CaptureRequest request,
-                                               TotalCaptureResult result) {
-                    // TODO took photo shows mirror.
-                    // set content view
-                }
-            };
-
-    private CameraCaptureSession.StateCallback takePhotoStateCallBack =
-            new CameraCaptureSession.StateCallback() {
-
-/* This method is called when the camera device has finished configuring itself,
-                   and the session can start processing capture requests.*/
-
-                @Override
-                public void onConfigured(CameraCaptureSession cameraCaptureSession) {
-                    d(TAG, "smart mirror camera configuring start.");
-                    // The camera is already closed
-                    if (cameraDevice == null) {
-                        w(TAG, "camera device is null");
-                        return;
-                    }
-                    // When the session is ready, we start capture.
-                    takePhotoSession = cameraCaptureSession;
-                    try {
-                        previewBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                        previewRequest = previewBuilder.build();
-                        takePhotoSession.setRepeatingRequest(previewRequest, takePhotoCallback, null);
-                        d(TAG, "Session initialized.");
-                    } catch (CameraAccessException cae) {
-                        e(TAG, "camera access exception : ", cae);
-                    }
-                    d(TAG, "smart mirror camera configuring end");
-                }
-
-                // this method is called when the camera device configuration fails.
-                @Override
-                public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
-                    w(TAG, "Failed to configure the smart mirror camera");
-                }
-            };
-
-
     /**
      * @Author Ryo Watanabe
      * initialize camera.
@@ -176,7 +71,6 @@ public class CameraProvider {
             String id = camIds[0];
             d(TAG, "Using camera id " + id);
             // this image reader used when take photo.
-            // the handler (which is second )
             imageReader.setOnImageAvailableListener((iReader) -> {
                 d(TAG, "photo took");
                 Image image = iReader.acquireLatestImage();
@@ -195,7 +89,106 @@ public class CameraProvider {
             }
             // if open camera method receives null handler,
             // callback calls calling thread.
-            manager.openCamera(id, stateCallback, new Handler(Looper.getMainLooper()));
+            manager.openCamera(id,
+                    new CameraDevice.StateCallback() {
+                        @Override
+                        public void onOpened(CameraDevice camera) {
+                            d(TAG, "Opened camera.");
+                            cameraDevice = camera;
+                            isCameraAvailable = true;
+                            try {
+                                previewBuilder
+                                        = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                                // set the preview surface of texture has calling class.
+                                // preview setting start.
+                                SurfaceTexture texture = PreviewFragment.getPreview().getSurfaceTexture();
+                                List<Surface> surfaceList = new ArrayList<>();
+                                if(PreviewFragment.getPreview().isAvailable()) {
+                                    Surface surface = new Surface(texture);
+                                    surfaceList.add(surface);
+                                    previewBuilder.addTarget(surface);
+                                } else {
+                                    previewBuilder.addTarget(imageReader.getSurface());
+                                }
+                                surfaceList.add(imageReader.getSurface());
+                                cameraDevice.createCaptureSession(surfaceList,
+                                        new CameraCaptureSession.StateCallback() {
+
+/* This method is called when the camera device has finished configuring itself,
+                   and the session can start processing capture requests.*/
+
+                                            @Override
+                                            public void onConfigured(CameraCaptureSession cameraCaptureSession) {
+                                                d(TAG, "smart mirror camera configuring start.");
+                                                // The camera is already closed
+                                                if (cameraDevice == null) {
+                                                    w(TAG, "camera device is null");
+                                                    return;
+                                                }
+                                                // When the session is ready, we start capture.
+                                                takePhotoSession = cameraCaptureSession;
+                                                try {
+                                                    previewBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                                                    previewRequest = previewBuilder.build();
+                                                    takePhotoSession.setRepeatingRequest(
+                                                            previewRequest,
+                                                            new CameraCaptureSession.CaptureCallback() {
+
+                                                                // This method is called when progressing capture.
+                                                                @Override
+                                                                public void onCaptureProgressed(CameraCaptureSession session,
+                                                                                                CaptureRequest request,
+                                                                                                CaptureResult partialResult) {
+                                                                    d(TAG, "Partial result of capture progress");
+                                                                }
+
+                                                                // This method is called when completed capturing.
+                                                                @Override
+                                                                public void onCaptureCompleted(CameraCaptureSession session,
+                                                                                               CaptureRequest request,
+                                                                                               TotalCaptureResult result) {
+                                                                }
+                                                            },
+                                                            null);
+                                                    d(TAG, "Session initialized.");
+                                                } catch (CameraAccessException cae) {
+                                                    e(TAG, "camera access exception : ", cae);
+                                                }
+                                                d(TAG, "smart mirror camera configuring end");
+                                            }
+
+                                            // this method is called when the camera device configuration fails.
+                                            @Override
+                                            public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
+                                                w(TAG, "Failed to configure the smart mirror camera");
+                                            }
+                                        },
+                                        null);
+                            } catch (CameraAccessException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+
+                        @Override
+                        public void onDisconnected(CameraDevice camera) {
+                            d(TAG, "Camera disconnected, closing.");
+                            camera.close();
+                        }
+
+                        @Override
+                        public void onError(CameraDevice camera, int i) {
+                            d(TAG, "Camera device error, closing.");
+                            camera.close();
+                        }
+
+                        @Override
+                        public void onClosed(CameraDevice camera) {
+                            d(TAG, "Closed camera, releasing");
+                            cameraDevice = null;
+                        }
+                    },
+                    new Handler(Looper.getMainLooper()));
             // create request builder for preview.
         } catch (CameraAccessException e) {
             e(TAG, "Exception in camera access", e);
@@ -220,7 +213,27 @@ public class CameraProvider {
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             previewBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                     CameraMetadata.CONTROL_AF_TRIGGER_START);
-            takePhotoSession.capture(previewBuilder.build(), takePhotoCallback,
+            takePhotoSession.capture(
+                    previewBuilder.build(),
+                    new CameraCaptureSession.CaptureCallback() {
+
+                        // This method is called when progressing capture.
+                        @Override
+                        public void onCaptureProgressed(CameraCaptureSession session,
+                                                        CaptureRequest request,
+                                                        CaptureResult partialResult) {
+                            d(TAG, "Partial result of capture progress");
+                        }
+
+                        // This method is called when completed capturing.
+                        @Override
+                        public void onCaptureCompleted(CameraCaptureSession session,
+                                                       CaptureRequest request,
+                                                       TotalCaptureResult result) {
+                            // TODO took photo shows mirror.
+                            // set content view
+                        }
+                    },
                     null);
         } catch (CameraAccessException cae) {
             e(TAG, "access exception while preparing pic", cae);
@@ -230,7 +243,6 @@ public class CameraProvider {
     public void shutdown() {
         if (takePhotoSession != null) {
             takePhotoSession.close();
-            takePhotoStateCallBack = null;
             d(TAG, "CaptureSession closed");
         }
     }
@@ -238,6 +250,7 @@ public class CameraProvider {
     public Bitmap getPhoto() {
         return this.photo;
     }
+
     public boolean photoExists() {
         return this.photo != null ? true : false;
     }

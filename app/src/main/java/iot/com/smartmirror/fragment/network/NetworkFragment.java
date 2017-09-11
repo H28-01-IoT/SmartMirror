@@ -1,34 +1,19 @@
 package iot.com.smartmirror.fragment.network;
 
+import android.app.Fragment;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
-import android.app.Fragment;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.net.URL;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import io.reactivex.Observable;
-import io.reactivex.Observer;
-import io.reactivex.Scheduler;
-import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.annotations.NonNull;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import iot.com.smartmirror.R;
 import iot.com.smartmirror.network.ImageParseAPI;
-import iot.com.smartmirror.network.json.cloudvision.CloudVisionResponce;
-import iot.com.smartmirror.network.json.cloudvision.Response;
 import retrofit.RestAdapter;
 
-import static android.util.Log.d;
 import static android.util.Log.e;
 
 /**
@@ -80,19 +65,21 @@ public class NetworkFragment extends Fragment {
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        responce -> {
-                            List<Response> resList = responce
+                        response -> {
+/*
+                            List<Response> resList = response
                                     .getResponses()
                                     .stream()
                                     .filter(each -> each != null)
                                     .collect(Collectors.toList());
                             long rescnt = resList.size();
-                            d(TAG, "response count is : " + rescnt);
+                            d(TAG, "response count is : " );
                             if(rescnt < 1) {
                                 e(TAG, "no response");
                             } else {
                                 // FIXME: 2017/09/11 get the face grid and return square.
                             }
+*/
                         },
                         onerr -> {
                             e(TAG, "some network error occur.");
